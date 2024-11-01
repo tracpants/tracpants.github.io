@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "Project Update"
+title: "Project Update draft test"
 published: true
 ---
 
-This is a test draft
+This is a test draft, with the correct timezone. 
