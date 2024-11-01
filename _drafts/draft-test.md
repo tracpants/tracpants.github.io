@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Project Update"
-published: false
+published: true
 ---
 
 This is a test draft
