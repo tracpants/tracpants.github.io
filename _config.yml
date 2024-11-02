@@ -5,6 +5,7 @@ theme: minima
 header_pages:
   - index.md
   - _pages/about.md
+  - _pages/archive.md
 
 include:
   - _pages
