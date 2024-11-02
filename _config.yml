@@ -1,3 +1,10 @@
 title: "A Blog Title"
 description: "A log of random projects."
 theme: minima
+
+header_pages:
+  - index.md
+  - about.md
+
+include:
+  - _pages
