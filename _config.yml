@@ -8,3 +8,6 @@ header_pages:
 
 include:
   - _pages
+
+plugins:
+  - jekyll-feed
