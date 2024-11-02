@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "blog.467542981.xyz, not sus at all"
+title: "Home"
 ---
 
 # Posts
