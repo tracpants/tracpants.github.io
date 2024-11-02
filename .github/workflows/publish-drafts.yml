@@ -19,6 +19,121 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.0'
+        bundler-cache: true
+
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: |
+        npm install -g markdownlint-cli2
+        npm install -g prettier
+        npm install -g cspell
+        npm install -g @cspell/dict-tech-terms
+        sudo apt-get update && sudo apt-get install -y aspell
+
+    - name: Setup Git for changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Apply Prettier formatting
+      run: |
+        echo "Applying Prettier formatting..."
+        for file in _drafts/*.md; do
+          if [ -f "$file" ]; then
+            prettier --write "$file"
+          fi
+        done
+
+    - name: Fix markdown issues
+      run: |
+        echo "Fixing markdown issues..."
+        for file in _drafts/*.md; do
+          if [ -f "$file" ]; then
+            markdownlint-cli2-fix "$file" || true
+          fi
+        done
+
+    - name: Fix common spelling issues
+      run: |
+        for file in _drafts/*.md; do
+          if [ -f "$file" ]; then
+            # Fix common typos
+            sed -i 's/teh /the /g' "$file"
+            sed -i 's/alot/a lot/g' "$file"
+            sed -i 's/its a /it'\''s a /g' "$file"
+            sed -i 's/dont/don'\''t/g' "$file"
+            
+            # Fix common technical terms capitalization
+            sed -i 's/javascript/JavaScript/g' "$file"
+            sed -i 's/typescript/TypeScript/g' "$file"
+            sed -i 's/github/GitHub/g' "$file"
+            sed -i 's/nodejs/Node.js/g' "$file"
+          fi
+        done
+
+    - name: Fix frontmatter
+      run: |
+        for file in _drafts/*.md; do
+          if [ -f "$file" ]; then
+            # Ensure file has frontmatter
+            if ! grep -q "^---" "$file"; then
+              echo "---" > temp_file
+              cat "$file" >> temp_file
+              echo "---" >> temp_file
+              mv temp_file "$file"
+            fi
+            
+            # Add date if missing
+            if ! grep -q "^date:" "$file"; then
+              sed -i "1a date: $(date +'%Y-%m-%d')" "$file"
+            fi
+            
+            # Add layout if missing
+            if ! grep -q "^layout:" "$file"; then
+              sed -i "1a layout: post" "$file"
+            fi
+          fi
+        done
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if [[ -n "$(git status --porcelain)" ]]; then
+          echo "changes=true" >> $GITHUB_ENV
+          echo "Changes were made during formatting"
+        else
+          echo "changes=false" >> $GITHUB_ENV
+          echo "No changes were needed"
+        fi
+
+    - name: Commit formatting changes
+      if: env.changes == 'true'
+      run: |
+        git add _drafts/*.md
+        git commit -m "Auto-fix formatting and spelling issues" || true
+        git push
+
+    - name: Run final quality checks
+      run: |
+        echo "Running final markdown lint..."
+        markdownlint-cli2 "_drafts/*.md" || {
+          echo "Some markdown issues could not be automatically fixed. Please review them manually."
+          exit 1
+        }
+        
+        echo "Running final spell check..."
+        for file in _drafts/*.md; do
+          if [ -f "$file" ]; then
+            cspell "$file" || {
+              echo "Some spelling issues could not be automatically fixed in $file. Please review them manually."
+              exit 1
+            }
+          fi
+        done
 
     - name: Check for published drafts
       id: check_published
@@ -46,11 +161,9 @@ jobs:
           fi
         done
 
-    - name: Commit changes
+    - name: Commit publication changes
       if: env.found == 'true'
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add _posts/*.md
         git add _drafts
         git commit -m "Auto-publish drafts on $(date +'%Y-%m-%d')"
