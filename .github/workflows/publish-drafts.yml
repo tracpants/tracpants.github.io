@@ -37,31 +37,21 @@ jobs:
       if: env.found == 'true'
       run: |
         today=$(date +"%Y-%m-%d")
+        mkdir -p _posts
         for file in _drafts/*.md; do
           if grep -q "published: true" "$file"; then
             filename=$(basename "$file")
-            mv "$file" "_posts/${today}-${filename}" && echo "Moved $file to _posts/${today}-${filename}"
+            cp "$file" "_posts/${today}-${filename}" && echo "Copied $file to _posts/${today}-${filename}"
+            rm "$file" && echo "Removed original draft file"
           fi
         done
 
-    - name: Commit changes to a new branch
+    - name: Commit changes
       if: env.found == 'true'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git checkout -b auto-publish-drafts
         git add _posts/*.md
+        git add _drafts
         git commit -m "Auto-publish drafts on $(date +'%Y-%m-%d')"
-        git push -u origin auto-publish-drafts
-
-    - name: Create a pull request
-      if: env.found == 'true'
-      uses: peter-evans/create-pull-request@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: auto-publish-drafts
-        base: main
-        title: "Publish Drafts"
-        body: "This PR contains drafts marked as ready to publish."
+        git push
