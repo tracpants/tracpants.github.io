@@ -3,9 +3,6 @@ description: "A log of random projects."
 # theme: minima
 remote_theme: jekyll/minima
 
-minima:
-  skin: dark
-
 header_pages:
   - _pages/about.md
   - _pages/archive.md
