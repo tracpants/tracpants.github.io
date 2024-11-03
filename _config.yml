@@ -2,6 +2,9 @@ title: "A Blog Title"
 description: "A log of random projects."
 theme: minima
 
+minima:
+  skin: dark
+
 header_pages:
   - _pages/about.md
   - _pages/archive.md
